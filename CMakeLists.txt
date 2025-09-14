@@ -5,14 +5,15 @@ cmake_minimum_required(VERSION 3.16)
 project(MySDL3Project VERSION 1.0 LANGUAGES CXX)
 
 # กำหนดมาตรฐานของ C++ ที่จะใช้ (แนะนำ 17 หรือสูงกว่าสำหรับ Modern C++)
-set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 # --- ส่วนที่สำคัญที่สุด: การค้นหา SDL3 ---
 # บอก CMake ให้ไปค้นหาไลบรารีในโฟลเดอร์ที่เราเตรียมไว้
 # CMAKE_SOURCE_DIR คือ path ของโปรเจกต์ (ที่มีไฟล์ CMakeLists.txt นี้อยู่)
-list(APPEND CMAKE_PREFIX_PATH "${CMAKE_SOURCE_DIR}/lib/sdl3-install")
-list(APPEND CMAKE_PREFIX_PATH "${CMAKE_SOURCE_DIR}/lib/SDL_image-install")
+set(CMAKE_PREFIX_PATH "${CMAKE_SOURCE_DIR}/lib/sdl3-install")
+
+
 
 # ค้นหาแพ็คเกจ SDL3 และกำหนดให้เป็นสิ่งที่ "จำเป็น" (REQUIRED)
 # หากหาไม่เจอ CMake จะหยุดทำงานและแจ้งข้อผิดพลาดทันที
@@ -42,7 +43,7 @@ if(WIN32)
     add_custom_command(
         TARGET MySDL3Project POST_BUILD
         COMMAND ${CMAKE_COMMAND} -E copy_if_different
-        "${CMAKE_SOURCE_DIR}/lib/SDL_image-install/bin/SDL3_image.dll"
+        "${CMAKE_SOURCE_DIR}/lib/sdl3-install/bin/SDL3_image.dll"
         $<TARGET_FILE_DIR:MySDL3Project>
         COMMENT "Copying SDL3_image.dll to output directory"
     )
