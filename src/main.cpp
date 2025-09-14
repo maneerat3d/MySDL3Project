@@ -1,70 +1,121 @@
+/*This source code copyrighted by Lazy Foo' Productions 2004-2024
+and may not be redistributed without written permission.*/
+
+//Using SDL
 #include <SDL3/SDL.h>
 #include <SDL3/SDL_main.h>
 
-int main(int argc, char* argv[])
+//Screen dimension constants
+const int SCREEN_WIDTH = 640;
+const int SCREEN_HEIGHT = 480;
+
+//Starts up SDL and creates window
+bool init();
+
+//Loads media
+bool loadMedia();
+
+//Frees media and shuts down SDL
+void close();
+
+//The window we'll be rendering to
+SDL_Window* gWindow = NULL;
+	
+//The surface contained by the window
+SDL_Surface* gScreenSurface = NULL;
+
+//The image we will load and show on the screen
+SDL_Surface* gHelloWorld = NULL;
+
+bool init()
 {
-    // 1. เริ่มต้นการทำงานของ SDL
-    if (!SDL_Init(SDL_INIT_VIDEO)) {
-        SDL_Log("Unable to initialize SDL: %s", SDL_GetError());
-        return 1;
-    }
+	//Initialization flag
+	bool success = true;
 
-    // 2. สร้างหน้าต่าง (Window)
-    SDL_Window* window = SDL_CreateWindow(
-        "AJA SDL3 Expert Template (Corrected)", // ชื่อหน้าต่าง
-        800,                                   // ความกว้าง
-        600,                                   // ความสูง
-        SDL_WINDOW_RESIZABLE                   // ทำให้ปรับขนาดหน้าต่างได้
-    );
+	//Initialize SDL
+	if( !SDL_Init( SDL_INIT_VIDEO ) )
+	{
+		SDL_Log( "SDL could not initialize! SDL_Error: %s\n", SDL_GetError() );
+		success = false;
+	}
+	else
+	{
+		//Create window
+		gWindow = SDL_CreateWindow( "SDL Tutorial", SCREEN_WIDTH, SCREEN_HEIGHT, 0 );
+		if( gWindow == NULL )
+		{
+			SDL_Log( "Window could not be created! SDL_Error: %s\n", SDL_GetError() );
+			success = false;
+		}
+		else
+		{
+			//Get window surface
+			gScreenSurface = SDL_GetWindowSurface( gWindow );
+		}
+	}
 
-    if (!window) {
-        SDL_Log("Could not create window: %s", SDL_GetError());
-        SDL_Quit();
-        return 1;
-    }
+	return success;
+}
 
-    // 3. สร้าง Renderer สำหรับวาดภาพ
-    // CHANGED: SDL3's SDL_CreateRenderer no longer takes flags like SDL_RENDERER_ACCELERATED.
-    // It will automatically try to use the best available backend.
-    SDL_Renderer* renderer = SDL_CreateRenderer(window, NULL);
-    if (!renderer) {
-        SDL_Log("Could not create renderer: %s", SDL_GetError());
-        SDL_DestroyWindow(window);
-        SDL_Quit();
-        return 1;
-    }
+bool loadMedia()
+{
+	//Loading success flag
+	bool success = true;
 
-    // (Optional) If you want to enable VSync, you can do it like this:
-    // SDL_SetRenderVSync(renderer, 1);
+	//Load splash image
+	gHelloWorld = SDL_LoadBMP( "assets/hello_world.bmp" );
+	if( gHelloWorld == NULL )
+	{
+		SDL_Log( "Unable to load image %s! SDL Error: %s\n", "02_getting_an_image_on_the_screen/hello_world.bmp", SDL_GetError() );
+		success = false;
+	}
 
-    // 4. Main Loop ของโปรแกรม
-    // CHANGED: SDL3 uses the standard C++ bool type now.
-    bool app_running = true; 
-    while (app_running) {
-        SDL_Event event;
-        // จัดการ Event ทั้งหมดที่เกิดขึ้น
-        while (SDL_PollEvent(&event)) {
-            if (event.type == SDL_EVENT_QUIT) {
-                // CHANGED: Use the standard C++ false.
-                app_running = false; 
-            }
-        }
+	return success;
+}
 
-        // --- ส่วนของการวาดภาพ ---
-        // 5. ล้างหน้าจอด้วยสีที่กำหนด (สีฟ้า)
-        SDL_SetRenderDrawColor(renderer, 30, 144, 255, 255);
-        SDL_RenderClear(renderer);
+void close()
+{
+	//Deallocate surface
+	SDL_DestroySurface( gHelloWorld );
+	gHelloWorld = NULL;
 
-        // (สามารถวาด Object อื่นๆ ได้ที่นี่)
+	//Destroy window
+	SDL_DestroyWindow( gWindow );
+	gWindow = NULL;
 
-        // 6. แสดงผลสิ่งที่วาดทั้งหมดออกทางหน้าจอ
-        SDL_RenderPresent(renderer);
-    }
+	//Quit SDL subsystems
+	SDL_Quit();
+}
 
-    // 7. ทำความสะอาดและคืนหน่วยความจำ
-    SDL_DestroyRenderer(renderer);
-    SDL_DestroyWindow(window);
-    SDL_Quit();
+int main( int argc, char* args[] )
+{
+	//Start up SDL and create window
+	if( !init() )
+	{
+		SDL_Log( "Failed to initialize!\n" );
+	}
+	else
+	{
+		//Load media
+		if( !loadMedia() )
+		{
+			SDL_Log( "Failed to load media!\n" );
+		}
+		else
+		{
+			//Apply the image
+			SDL_BlitSurface( gHelloWorld, NULL, gScreenSurface, NULL );
+			
+			//Update the surface
+			SDL_UpdateWindowSurface( gWindow );
 
-    return 0;
+			//Hack to get window to stay up
+			SDL_Event e; bool quit = false; while( quit == false ){ while( SDL_PollEvent( &e ) ){ if( e.type == SDL_EVENT_QUIT ) quit = true; } }
+		}
+	}
+
+	//Free resources and close SDL
+	close();
+
+	return 0;
 }

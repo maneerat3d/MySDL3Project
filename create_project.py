@@ -11,6 +11,7 @@ def create_project():
 
     ignore_list = [
         '*.pyc',
+        'doc',
         '*.py',
         '__pycache__',
         'build',

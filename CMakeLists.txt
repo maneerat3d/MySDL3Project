@@ -12,10 +12,12 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 # บอก CMake ให้ไปค้นหาไลบรารีในโฟลเดอร์ที่เราเตรียมไว้
 # CMAKE_SOURCE_DIR คือ path ของโปรเจกต์ (ที่มีไฟล์ CMakeLists.txt นี้อยู่)
 list(APPEND CMAKE_PREFIX_PATH "${CMAKE_SOURCE_DIR}/lib/sdl3-install")
+list(APPEND CMAKE_PREFIX_PATH "${CMAKE_SOURCE_DIR}/lib/SDL_image-install")
 
 # ค้นหาแพ็คเกจ SDL3 และกำหนดให้เป็นสิ่งที่ "จำเป็น" (REQUIRED)
 # หากหาไม่เจอ CMake จะหยุดทำงานและแจ้งข้อผิดพลาดทันที
 find_package(SDL3 REQUIRED)
+find_package(SDL3_image REQUIRED)
 
 # สร้าง Executable ของเราจากไฟล์ source code
 add_executable(MySDL3Project src/main.cpp)
@@ -23,7 +25,7 @@ add_executable(MySDL3Project src/main.cpp)
 # --- การ Link ไลบรารีที่ถูกต้องตามหลัก Modern CMake ---
 # ทำการ Link โปรเจกต์ของเรากับ SDL3 โดยใช้ "Imported Target" (SDL3::SDL3)
 # วิธีนี้จะจัดการเรื่อง include paths, linker flags และ dependencies อื่นๆ ให้อัตโนมัติ
-target_link_libraries(MySDL3Project PRIVATE SDL3::SDL3)
+target_link_libraries(MySDL3Project PRIVATE SDL3::SDL3 SDL3_image::SDL3_image)
 
 # --- จัดการ DLL สำหรับ Windows ---
 # เพื่อให้โปรแกรมของเราทำงานได้ เราต้อง copy ไฟล์ SDL3.dll ไปไว้ที่เดียวกับไฟล์ .exe
@@ -36,6 +38,23 @@ if(WIN32)
         $<TARGET_FILE_DIR:MySDL3Project>
         COMMENT "Copying SDL3.dll to output directory"
     )
+
+    add_custom_command(
+        TARGET MySDL3Project POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different
+        "${CMAKE_SOURCE_DIR}/lib/SDL_image-install/bin/SDL3_image.dll"
+        $<TARGET_FILE_DIR:MySDL3Project>
+        COMMENT "Copying SDL3_image.dll to output directory"
+    )
+
+    add_custom_command(
+        TARGET MySDL3Project POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy_directory
+                "${CMAKE_CURRENT_SOURCE_DIR}/assets"  # โฟลเดอร์ต้นทาง
+                "$<TARGET_FILE_DIR:MySDL3Project>/assets"  # โฟลเดอร์ปลายทาง
+        COMMENT "Copying assets directory to executable directory"
+    )
+    
 endif()
 
 # (ทางเลือก) ตั้งค่า Output Directory ให้ไฟล์ .exe ไปอยู่ในโฟลเดอร์ bin
