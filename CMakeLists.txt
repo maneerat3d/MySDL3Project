@@ -5,8 +5,9 @@ cmake_minimum_required(VERSION 3.16)
 project(MySDL3Project VERSION 1.0 LANGUAGES CXX)
 
 # กำหนดมาตรฐานของ C++ ที่จะใช้ (แนะนำ 17 หรือสูงกว่าสำหรับ Modern C++)
-set(CMAKE_CXX_STANDARD 23)
+set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
+
 
 # --- ส่วนที่สำคัญที่สุด: การค้นหา SDL3 ---
 # บอก CMake ให้ไปค้นหาไลบรารีในโฟลเดอร์ที่เราเตรียมไว้
