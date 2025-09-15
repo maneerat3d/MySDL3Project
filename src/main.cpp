@@ -4,8 +4,10 @@ and may not be redistributed without written permission.*/
 //Using SDL
 #include <SDL3/SDL.h>
 #include <SDL3/SDL_main.h>
-#include <SDL3/SDL_mouse.h>
 #include <SDL3/SDL_events.h>
+#include <SDL3/SDL_mouse.h>
+#include <SDL3/SDL_keyboard.h>
+#include <SDL3/SDL_scancode.h>
 
 #include <numbers>
 
@@ -39,6 +41,11 @@ SDL_Texture* gImageTexture = nullptr;
 // ตัวแปรสำหรับสถานะการหมุน
 double gRotationAngle = 0.0;
 bool gIsDragging = false;
+
+// ตัวแปรสำหรับสถานะการย่อขยาย
+float gScale = 1.0f;
+int gImageWidth = 0;
+int gImageHeight = 0;
 
 bool init()
 {
@@ -158,15 +165,19 @@ double calculateRotationAngle(int mouseX, int mouseY, int imageCenterX, int imag
  */
 void tick(float deltaTime)
 {
+	int ScreenWidth, ScreenHeight;
+	SDL_GetWindowSize(gWindow, &ScreenWidth, &ScreenHeight);
+	
 	// === ส่วนอัปเดตสถานะ (Update Logic) ===
-    if (gIsDragging)
+    if (gIsDragging) 
     {
+
         float mouseX, mouseY;
         SDL_GetMouseState(&mouseX, &mouseY);
 
         // ตำแหน่งศูนย์กลางของจอ (และรูปภาพ)
-        int imageCenterX = SCREEN_WIDTH / 2;
-        int imageCenterY = SCREEN_HEIGHT / 2;
+        int imageCenterX = ScreenWidth / 2;
+        int imageCenterY = ScreenHeight / 2;
         
         // เรียกใช้ฟังก์ชันเพื่อคำนวณและอัปเดตมุมการหมุน
         gRotationAngle = calculateRotationAngle(mouseX, mouseY, imageCenterX, imageCenterY);
@@ -183,12 +194,17 @@ void tick(float deltaTime)
         float texW, texH;
         SDL_GetTextureSize(gImageTexture, &texW, &texH);
         
+		const int newWidth = static_cast<int>(texW * gScale);
+		const int newHeight = static_cast<int>(texH * gScale);
+
         SDL_FRect dstRect = {
-            (SCREEN_WIDTH - texW) / 2.0f,
-            (SCREEN_HEIGHT - texH) / 2.0f,
-            (float)texW,
-            (float)texH
+            (ScreenWidth - texW) / 2.0f,
+            (ScreenHeight - texH) / 2.0f,
+            (float)newWidth,
+            (float)newHeight
         };
+
+
 
         // 3. วาด Texture พร้อมการหมุน!
         SDL_RenderTextureRotated(gRenderer, gImageTexture, nullptr, &dstRect, gRotationAngle, nullptr, SDL_FLIP_NONE);
@@ -229,7 +245,27 @@ int main( int argc, char* args[] )
                 if (e.button.button == SDL_BUTTON_LEFT) {
                     gIsDragging = false;
                 }
-            }
+            } else if (e.type == SDL_EVENT_KEY_DOWN) {
+				// เช็คก่อนว่าปุ่มที่กดคือปุ่ม '=' หรือ '-' หรือไม่
+				if (e.key.scancode == SDL_SCANCODE_EQUALS || e.key.scancode == SDL_SCANCODE_MINUS) {
+					
+					// ถ้าใช่, ค่อยมาเช็คว่าปุ่ม Ctrl ถูกกดค้างอยู่ด้วยหรือเปล่า
+					// โดยใช้ e.key.mod กับค่าคงที่ SDL_KMOD_CTRL
+					if (e.key.mod & SDL_KMOD_CTRL) {
+						
+						// ถ้าเงื่อนไขทั้งหมดเป็นจริง แสดงว่ากด Ctrl + '=' หรือ Ctrl + '-'
+						if (e.key.scancode == SDL_SCANCODE_EQUALS) {
+							gScale += 0.1f;
+							SDL_Log("Zoom In (Scale: %f)", gScale);
+						} else { // ไม่ต้องเช็คซ้ำ เพราะถ้าไม่ใช่ EQUALS ก็ต้องเป็น MINUS
+							gScale -= 0.1f;
+							if(gScale <= .1) gScale = 0.1;
+							SDL_Log("Zoom Out (Scale: %f)", gScale);
+						}
+					}
+				}
+
+        	}
         }
 
         // คำนวณ Delta Time
