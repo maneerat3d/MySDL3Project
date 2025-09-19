@@ -1,6 +1,3 @@
-/*This source code copyrighted by Lazy Foo' Productions 2004-2024
-and may not be redistributed without written permission.*/
-
 //Using SDL
 #include <SDL3/SDL.h>
 #include <SDL3/SDL_main.h>
